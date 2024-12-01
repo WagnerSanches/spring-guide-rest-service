@@ -3,6 +3,7 @@ package com.local.rest.Payroll.Controller;
 import com.local.rest.Payroll.Entities.Employee;
 import com.local.rest.Payroll.Exceptions.EmployeeNotFoundException;
 import com.local.rest.Payroll.Repository.EmployeeRepository;
+import org.springframework.hateoas.CollectionModel;
 import org.springframework.web.bind.annotation.*;
 
 import org.springframework.hateoas.EntityModel;
@@ -20,8 +21,16 @@ public class EmployeeController {
     }
 
     @GetMapping("/employees")
-    List<Employee> all() {
-        return this.repository.findAll();
+    CollectionModel<EntityModel<Employee>> all() {
+
+        List<EntityModel<Employee>> employees = repository.findAll().stream().map(
+                employee -> EntityModel.of(employee,
+                            linkTo(methodOn(EmployeeController.class).one(employee.getId())).withSelfRel(),
+                            linkTo(methodOn(EmployeeController.class).all()).withRel("employees"))
+                ).toList();
+
+        return CollectionModel.of(employees,
+                linkTo(methodOn(EmployeeController.class)).withSelfRel());
     }
 
     @PostMapping("/employees")
